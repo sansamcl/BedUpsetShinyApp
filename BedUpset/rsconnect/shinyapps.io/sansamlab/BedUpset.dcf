@@ -1,0 +1,13 @@
+name: BedUpset
+title: BedUpset
+username:
+account: sansamlab
+server: shinyapps.io
+hostUrl: https://api.shinyapps.io/v1
+appId: 4250653
+bundleId: 4699308
+url: https://sansamlab.shinyapps.io/BedUpset/
+when: 1623292857.61125
+lastSyncTime: 1623292857.61126
+asMultiple: FALSE
+asStatic: FALSE
