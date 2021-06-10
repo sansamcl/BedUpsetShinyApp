@@ -1,4 +1,20 @@
+2021Jun09_BedUpsetShinyApp.Rproj
 setup bioC repository.R
+H_250_all.bed
+H_250_broad_all.bed
+H_1000_broad_all.bed
+HCT116_250_all.bed
+HCT116_250_broad_all.bed
+HCT116_1000_all.bed
+HCT116_1000_broad_all.bed
+MTBP_250_all.bed
+MTBP_250_broad_all.bed
+MTBP_1000_all.bed
+MTBP_1000_broad_all.bed
+TICRR_250_all.bed
+TICRR_250_broad_all.bed
+TICRR_1000_all.bed
+TICRR_1000_broad_all.bed
 .Rproj.user
 .Rhistory
 .RData
