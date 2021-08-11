@@ -34,7 +34,8 @@ ui <- fluidPage(
                    value=400)
     ),
     mainPanel(
-      plotOutput("upsetPlot")
+      plotOutput("upsetPlot"),
+      uiOutput("downloadPlotButton")
     )
   )
 )
@@ -42,7 +43,7 @@ ui <- fluidPage(
 # Define server logic required to draw a histogram
 server <- function(input, output) {
   
-  makeUpsetFromBeds <- function(BedFilenamesFull,BedFilenames){
+  makeUpsetFromBeds <- function(BedFilenamesFull,BedFilenames,plotChoice){
     Beds.df <- lapply(BedFilenamesFull,read.table)
     Beds.gr <- lapply(Beds.df,
                       GenomicRanges::makeGRangesFromDataFrame,
@@ -73,7 +74,7 @@ server <- function(input, output) {
                          order.by = "freq",
                          text.scale=input$fontScale)
     
-    if(input$plotType=="Upset"){
+    if(plotChoice=="Upset"){
       plt
     }else{
       eulerPlot
@@ -82,6 +83,7 @@ server <- function(input, output) {
   }
   
   output$sampleChoices <- renderUI({
+    req(input$bedFiles$name)
     #checkboxGroupInput
     shinyWidgets::multiInput("bedFileChoices", 
                              "Choose Bed Files", 
@@ -90,14 +92,53 @@ server <- function(input, output) {
   })
   
   datapaths <- reactive({
+    req(input$bedFiles)
+    req(input$bedFileChoices)
     input$bedFiles$datapath[match(input$bedFileChoices,input$bedFiles$name)]
   })
   
-  output$upsetPlot <- renderPlot({
-    req(input$bedFiles)
+  eulerPlot <- reactive({
+    req(datapaths())
+    req(input$bedFileChoices)
     makeUpsetFromBeds(datapaths(),
-                      input$bedFileChoices)
+                      input$bedFileChoices,
+                      "Euler")
+  })
+  
+  upsetPLot <- reactive({
+    req(datapaths())
+    req(input$bedFileChoices)
+    makeUpsetFromBeds(datapaths(),
+                      input$bedFileChoices,
+                      "Upset")
+  })
+  
+  output$upsetPlot <- renderPlot({
+    if(input$plotType=="Euler"){
+      eulerPlot()
+    }else{
+      upsetPLot()
+    }
+    
   },height=reactive(input$plotHeight))
+  
+  output$downloadPlotButton <- renderUI({
+    req(upsetPLot())
+    req(eulerPlot())
+    downloadButton("downloadPlot",
+                   "Download Plot")
+  })
+  
+  output$downloadPlot <- downloadHandler(
+    filename = function() { "plot.pdf" },
+    content = function(file) {
+      ggplot2::ggsave(file, plot = eulerPlot(), device = "pdf")
+      if(input$plotType=="Euler"){
+        
+      }else
+        ggplot2::ggsave(file, plot = upsetPLot(), device = "pdf")
+    }
+  )
   
 }
 
