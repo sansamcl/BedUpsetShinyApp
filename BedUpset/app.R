@@ -8,6 +8,7 @@
 #
 
 library(shiny)
+library(purrr)
 
 # Define UI for application that draws a histogram
 ui <- fluidPage(
@@ -18,24 +19,38 @@ ui <- fluidPage(
   # Sidebar with a slider input for number of bins 
   sidebarLayout(
     sidebarPanel(
-      fileInput(inputId="bedFiles",
-                label="BedFiles",
-                multiple=T),
-      uiOutput("sampleChoices"),
-      radioButtons("plotType",
-                   "Plot Type",
-                   choices=c("Euler","Upset"),
-                   selected="Upset"),
-      numericInput(inputId="fontScale",
-                   label="Font Scale",
-                   value=1),
-      numericInput(inputId="plotHeight",
-                   label="Plot Height",
-                   value=400)
+      wellPanel(fileInput(inputId="bedFiles",
+                          label="BedFiles",
+                          multiple=T))
     ),
     mainPanel(
-      plotOutput("upsetPlot"),
-      uiOutput("downloadPlotButton")
+      wellPanel(uiOutput("sampleChoices"))
+    )
+  ),
+  sidebarLayout(
+      sidebarPanel(
+        radioButtons("plotType",
+                     "Plot Type",
+                     choices=c("Euler","Upset"),
+                     selected="Upset"),
+        numericInput(inputId="fontScale",
+                     label="Font Scale",
+                     value=1),
+        numericInput(inputId="plotHeight",
+                     label="Plot Height",
+                     value=400),
+        wellPanel(uiOutput("sampleLabelInputPanel")),
+        wellPanel(uiOutput("sampleColorInputPanel"),
+                  sliderInput("transparency",
+                              "Adjust color transparency",
+                              min=0.1,
+                              max=0.9,
+                              step=0.1,
+                              value=0.7))
+      ),
+      mainPanel(
+        wellPanel(plotOutput("upsetPlot"),
+                  uiOutput("downloadPlotButton"))
     )
   )
 )
@@ -43,7 +58,7 @@ ui <- fluidPage(
 # Define server logic required to draw a histogram
 server <- function(input, output) {
   
-  makeUpsetFromBeds <- function(BedFilenamesFull,BedFilenames,plotChoice){
+  makeUpsetFromBeds <- function(BedFilenamesFull,BedFilenames,plotChoice,sampleLabelsDF,colrs){
     Beds.df <- lapply(BedFilenamesFull,read.table)
     Beds.gr <- lapply(Beds.df,
                       GenomicRanges::makeGRangesFromDataFrame,
@@ -60,12 +75,15 @@ server <- function(input, output) {
             sep="_")
     }
     lst <- lapply(Beds.gr,GetOverlapsWithAll,AllBeds.gr)
-    nmes <- gsub(".bed","",basename(BedFilenames))
+    #nmes <- gsub(".bed","",basename(BedFilenames))
+    nmes <- sampleLabelsDF$labels[match(sampleLabelsDF$files,basename(BedFilenames))]
+    nmes <- gsub(".bed","",nmes)
     names(lst) <- nmes
+    #names(lst) <- sampleLabelsDF$labels
     upsetList <- UpSetR::fromList(lst)
     
     
-    eulerPlot <- plot(eulerr::euler(upsetList),quantities=T)
+    eulerPlot <- plot(eulerr::euler(upsetList),quantities=T,fills=colrs$colors,alpha=input$transparency)
     
     
     
@@ -102,7 +120,9 @@ server <- function(input, output) {
     req(input$bedFileChoices)
     makeUpsetFromBeds(datapaths(),
                       input$bedFileChoices,
-                      "Euler")
+                      "Euler",
+                      sampleLabels(),
+                      sampleColors())
   })
   
   upsetPLot <- reactive({
@@ -110,7 +130,9 @@ server <- function(input, output) {
     req(input$bedFileChoices)
     makeUpsetFromBeds(datapaths(),
                       input$bedFileChoices,
-                      "Upset")
+                      "Upset",
+                      sampleLabels(),
+                      sampleColors())
   })
   
   output$upsetPlot <- renderPlot({
@@ -122,6 +144,62 @@ server <- function(input, output) {
     
   },height=reactive(input$plotHeight))
   
+  output$sampleLabelInputPanel <- renderUI({
+    purrr::map(input$bedFileChoices, ~ textInput(.x, .x, .x))
+  })
+  
+  sampleLabels <- reactive({
+    req(input$bedFileChoices)
+    data.frame("files"=input$bedFileChoices,
+               "labels"=purrr::map_chr(
+                 input$bedFileChoices, ~ input[[.x]] %||% "")
+               )
+  })
+  ###
+  # output$sampleColorInputPanel <- renderUI({
+  #   purrr::map(input$bedFileChoices, ~ colourpicker::colourInput(paste(.x,"color",sep="_"), 
+  #                                                                .x, 
+  #                                                                .x,
+  #                                                                allowTransparent = TRUE,
+  #                                                                palette="limited",
+  #                                                                allowedCols=RColorBrewer::brewer.pal(8, "Dark2")
+  #                                                                ))
+  # })
+  
+  colorList <- reactive({
+    list(
+      c("#1B9E77","#D95F02","#bdbdbd"),
+      RColorBrewer::brewer.pal(9, "Set1"),
+      RColorBrewer::brewer.pal(8, "Set2"),
+      RColorBrewer::brewer.pal(12, "Set3"),
+      RColorBrewer::brewer.pal(9, "Pastel1"),
+      RColorBrewer::brewer.pal(8, "Pastel2"),
+      RColorBrewer::brewer.pal(12, "Paired"),
+      RColorBrewer::brewer.pal(8, "Dark2"),
+      RColorBrewer::brewer.pal(8, "Accent")
+    )
+    # lst2 <- lapply(lst,GISTools::add.alpha,input$transparency)
+    # tp <- lapply(lst2,function(vr){sapply(vr,stringr::str_extract,"..$")})[[1]][1]
+    # hex <- lapply(lst,function(vr){sapply(vr,stringr::str_extract,"[^#]*$")})
+    # lapply(hex,function(x){paste("#",tp,x,sep="")})
+    
+  })
+  
+  output$sampleColorInputPanel <- renderUI({
+    purrr::map(input$bedFileChoices, ~ shinyWidgets::spectrumInput(paste(.x,"color",sep="_"), 
+                                                                 .x,
+                                                                 choices=colorList()
+    ))
+  })
+  
+  sampleColors <- reactive({
+    req(input$bedFileChoices)
+    data.frame("files"=input$bedFileChoices,
+               "colors"=purrr::map_chr(
+                 input$bedFileChoices, ~ input[[paste(.x,"color",sep="_")]] %||% "")
+    )
+  })
+  ###
   output$downloadPlotButton <- renderUI({
     req(upsetPLot())
     req(eulerPlot())

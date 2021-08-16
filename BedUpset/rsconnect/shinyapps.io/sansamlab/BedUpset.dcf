@@ -5,9 +5,9 @@ account: sansamlab
 server: shinyapps.io
 hostUrl: https://api.shinyapps.io/v1
 appId: 4250653
-bundleId: 4913530
+bundleId: 4916336
 url: https://sansamlab.shinyapps.io/BedUpset/
-when: 1628714951.28314
-lastSyncTime: 1628714951.28315
+when: 1628783827.39328
+lastSyncTime: 1628783827.39329
 asMultiple: FALSE
 asStatic: FALSE
