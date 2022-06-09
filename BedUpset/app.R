@@ -16,8 +16,10 @@ ui <- fluidPage(
   # Application title
   titlePanel("Make Euler or Upset plot from multiple bed files"),
   HTML("
+<a href='https://github.com/sansamcl/BedUpsetShinyApp'>
 <img alt='GitHub release (latest by date)' src='https://img.shields.io/github/v/release/sansamcl/BedUpsetShinyApp?display_name=tag&label=GitHub%20Release'>
-  "),
+</a>
+"),
   
   # Sidebar with a slider input for number of bins 
   sidebarLayout(
