@@ -77,7 +77,7 @@ server <- function(input, output) {
     lst <- lapply(Beds.gr,GetOverlapsWithAll,AllBeds.gr)
     #nmes <- gsub(".bed","",basename(BedFilenames))
     nmes <- sampleLabelsDF$labels[match(sampleLabelsDF$files,basename(BedFilenames))]
-    nmes <- gsub(".bed","",nmes)
+    nmes <- gsub("\\.[^.]*$","",nmes)
     names(lst) <- nmes
     #names(lst) <- sampleLabelsDF$labels
     upsetList <- UpSetR::fromList(lst)
