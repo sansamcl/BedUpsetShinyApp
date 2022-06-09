@@ -1,3 +1,4 @@
+[![](https://img.shields.io/badge/Shiny-shinyapps.io-blue?style=flat&labelColor=white&logo=RStudio&logoColor=blue)](https://sansamlab.shinyapps.io/BedUpset/)
 ![Release](https://img.shields.io/github/v/release/sansamcl/BedUpsetShinyApp)
 ![ReleaseDate](https://img.shields.io/github/release-date/sansamcl/BedUpsetShinyApp)
 ![Size](https://img.shields.io/github/repo-size/sansamcl/BedUpsetShinyApp)
