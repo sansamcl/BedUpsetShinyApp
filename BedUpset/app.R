@@ -16,8 +16,8 @@ ui <- fluidPage(
   # Application title
   titlePanel("Make Euler or Upset plot from multiple bed files"),
   HTML("
-<a href="https://sansamlab.shinyapps.io/BedUpset/">
-<img src='<img alt="GitHub release (latest by date)" src="https://img.shields.io/github/v/release/sansamcl/BedUpsetShinyApp?display_name=tag&label=GitHub%20Release">' alt='Image_Here'>
+<a href='https://sansamlab.shinyapps.io/BedUpset/'>
+<img src='<img alt='GitHub release (latest by date)' src='https://img.shields.io/github/v/release/sansamcl/BedUpsetShinyApp?display_name=tag&label=GitHub%20Release'>' alt='Image_Here'>
 </a>
   "),
   
