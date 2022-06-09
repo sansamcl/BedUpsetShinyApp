@@ -16,6 +16,7 @@ ui <- fluidPage(
   # Application title
   titlePanel("Make Euler or Upset plot from multiple bed files"),
   HTML("
+<a href='https://zenodo.org/badge/latestdoi/375552189'><img src='https://zenodo.org/badge/375552189.svg' alt='DOI'></a>
 <a href='https://github.com/sansamcl/BedUpsetShinyApp'>
 <img alt='GitHub release (latest by date)' src='https://img.shields.io/github/v/release/sansamcl/BedUpsetShinyApp?display_name=tag&label=GitHub%20Release'>
 </a>
