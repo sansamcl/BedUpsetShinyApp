@@ -20,4 +20,8 @@
 
 BedUpsetShinyApp generates either Euler or UpSet plots to visualize overlapping regions in .bed files. This is a shiny app that is hosted [here](https://sansamlab.shinyapps.io/BedUpset/).
 
+If you want to run locally, use the following command in R:
+```R
+shiny::runGitHub("BedUpsetShinyApp", "sansamcl",subdir="BedUpset")
+```
 
