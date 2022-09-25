@@ -119,7 +119,7 @@ server <- function(input, output) {
         )
       }
       lst <-
-        lapply(Beds.gr, GetOverlapsWithAll, AllBeds.gr, minFracOverlap)
+        lapply(Beds.gr, GetOverlapsWithAll, all.gr=AllBeds.gr, minOverlap=minFracOverlap)
       #nmes <- gsub(".bed","",basename(BedFilenames))
       nmes <-
         sampleLabelsDF$labels[match(sampleLabelsDF$files, basename(BedFilenames))]
@@ -237,8 +237,7 @@ server <- function(input, output) {
                             lst <-
                               lapply(Beds.gr,
                                      GetOverlapsWithAll,
-                                     AllBeds.gr,
-                                     minFracOverlap)
+                                     all.gr=AllBeds.gr, minOverlap=minFracOverlap)
                             nmes <-
                               sampleLabelsDF$labels[match(sampleLabelsDF$files, basename(BedFilenames))]
                             nmes <- gsub("\\.[^.]*$", "", nmes)
@@ -307,8 +306,7 @@ server <- function(input, output) {
                             lst <-
                               lapply(Beds.gr,
                                      GetOverlapsWithAll,
-                                     AllBeds.gr,
-                                     minFracOverlap)
+                                     all.gr=AllBeds.gr, minOverlap=minFracOverlap)
                             nmes <-
                               sampleLabelsDF$labels[match(sampleLabelsDF$files, basename(BedFilenames))]
                             nmes <- gsub("\\.[^.]*$", "", nmes)
