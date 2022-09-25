@@ -43,10 +43,13 @@ ui <- fluidPage(
         choices = c("Euler", "Upset"),
         selected = "Upset"
       ),
-      numericInput(
+      sliderInput(
         inputId = "minFractOverlap",
         label = "Minimum Fraction Overlap",
-        value = 0.1
+        value = 0,
+        min = 0,
+        max = 1,
+        step = 0.05
       ),
       numericInput(
         inputId = "fontScale",
