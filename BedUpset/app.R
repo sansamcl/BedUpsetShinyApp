@@ -10,6 +10,11 @@
 library(shiny)
 library(purrr)
 library(shinymeta)
+require(GenomicRanges)
+require(ggplot2)
+require(UpSetR)
+require(eulerr)
+require(ggplotify)
 
 # Define UI for application that draws a histogram
 ui <- fluidPage(
@@ -107,11 +112,11 @@ server <- function(input, output) {
       )
       AllBeds.gr <- GenomicRanges::reduce(do.call("c", Beds.gr))
       GetOverlapsWithAll <- function(bed.gr, all.gr, minOverlap) {
-        hits <- findOverlaps(all.gr, bed.gr)
-        overlaps <- pintersect(all.gr[queryHits(hits)],
-                               bed.gr[subjectHits(hits)])
+        hits <- GenomicRanges::findOverlaps(all.gr, bed.gr)
+        overlaps <- GenomicRanges::pintersect(all.gr[queryHits(hits)],
+                                              bed.gr[subjectHits(hits)])
         percentOverlap <-
-          width(overlaps) / width(all.gr[queryHits(hits)])
+          GenomicRanges::width(overlaps) / GenomicRanges::width(all.gr[queryHits(hits)])
         sigHits <- hits[percentOverlap > minOverlap]
         GRovrlps <- all.gr[queryHits(sigHits)]
         paste(
@@ -128,32 +133,31 @@ server <- function(input, output) {
         sampleLabelsDF$labels[match(sampleLabelsDF$files, basename(BedFilenames))]
       nmes <- gsub("\\.[^.]*$", "", nmes)
       names(lst) <- nmes
-      #names(lst) <- sampleLabelsDF$labels
-      upsetList <- UpSetR::fromList(lst)
-      
-      
-      eulerPlot <-
-        plot(
-          eulerr::euler(upsetList),
-          quantities = T,
-          fills = colrs$colors,
-          alpha = alfa
-        )
-      
-      plt <- UpSetR::upset(
-        upsetList,
-        nsets = length(lst),
-        order.by = "freq",
-        text.scale = fontScale
-      )
-      
-      if (plotChoice == "Upset") {
-        plt
-      } else{
-        eulerPlot
-      }
-      
+      if (max(sapply(lst,length)) > 0 ){
+        upsetList <- UpSetR::fromList(lst)
+        eulerPlot <- plot(eulerr::euler(upsetList), quantities = T, fills = colrs$colors, alpha = alfa)
+        plt <- UpSetR::upset(upsetList, nsets = length(lst), order.by = "freq", text.scale = fontScale)
+        if (plotChoice == "Upset") {
+          plt
+        } else {
+          eulerPlot
+        }
+      } else {
+        par(mar = c(0, 0, 0, 0))
+        plot(x = 0:1,
+             y = 0:1,
+             ann = F,
+             bty = "n",
+             type = "n",
+             xaxt = "n",
+             yaxt = "n")
+        text(x = 0.5,
+             y = 0.5,
+             "No Overlaps Detected", 
+             cex = 1.8)
+        }
     }
+    
   
   output$sampleChoices <- renderUI({
     req(input$bedFiles$name)
@@ -221,13 +225,14 @@ server <- function(input, output) {
                               start.field = "V2",
                               end.field = "V3"
                             )
+                            AllBeds.gr <- GenomicRanges::reduce(do.call("c", Beds.gr))
                             GetOverlapsWithAll <-
                               function(bed.gr, all.gr, minOverlap) {
-                                hits <- findOverlaps(all.gr, bed.gr)
-                                overlaps <- pintersect(all.gr[queryHits(hits)],
-                                                       bed.gr[subjectHits(hits)])
+                                hits <- GenomicRanges::findOverlaps(all.gr, bed.gr)
+                                overlaps <- GenomicRanges::pintersect(all.gr[queryHits(hits)],
+                                                                      bed.gr[subjectHits(hits)])
                                 percentOverlap <-
-                                  width(overlaps) / width(all.gr[queryHits(hits)])
+                                  GenomicRanges::width(overlaps) / GenomicRanges::width(all.gr[queryHits(hits)])
                                 sigHits <- hits[percentOverlap > minOverlap]
                                 GRovrlps <- all.gr[queryHits(sigHits)]
                                 paste(
@@ -290,13 +295,14 @@ server <- function(input, output) {
                             )
                             AllBeds.gr <-
                               GenomicRanges::reduce(do.call("c", Beds.gr))
-                            GetOverlapsWithAll <- function(bed.gr, all.gr) {
-                              hits <- findOverlaps(all.gr, bed.gr)
-                              overlaps <- pintersect(all.gr[queryHits(hits)],
-                                                     bed.gr[subjectHits(hits)])
+                            GetOverlapsWithAll <- function(bed.gr, all.gr,minOverlap) {
+                              hits <- GenomicRanges::findOverlaps(all.gr, bed.gr)
+                              overlaps <- GenomicRanges::pintersect(all.gr[queryHits(hits)],
+                                                                    bed.gr[subjectHits(hits)])
                               percentOverlap <-
-                                width(overlaps) / width(all.gr[queryHits(hits)])
-                              sigHits <- hits[percentOverlap > minFracOverlap]
+                                GenomicRanges::width(overlaps) / GenomicRanges::width(all.gr[queryHits(hits)])
+                              sigHits <- hits[percentOverlap > minOverlap]
+                              GRovrlps <- all.gr[queryHits(sigHits)]
                               paste(
                                 GenomicRanges::seqnames(GRovrlps),
                                 GenomicRanges::start(GRovrlps),
@@ -366,16 +372,6 @@ server <- function(input, output) {
       "labels" = purrr::map_chr(input$bedFileChoices, ~ input[[.x]] %||% "")
     )
   })
-  ###
-  # output$sampleColorInputPanel <- renderUI({
-  #   purrr::map(input$bedFileChoices, ~ colourpicker::colourInput(paste(.x,"color",sep="_"),
-  #                                                                .x,
-  #                                                                .x,
-  #                                                                allowTransparent = TRUE,
-  #                                                                palette="limited",
-  #                                                                allowedCols=RColorBrewer::brewer.pal(8, "Dark2")
-  #                                                                ))
-  # })
   
   colorList <- metaReactive2({
     list(
@@ -389,11 +385,6 @@ server <- function(input, output) {
       RColorBrewer::brewer.pal(8, "Dark2"),
       RColorBrewer::brewer.pal(8, "Accent")
     )
-    # lst2 <- lapply(lst,GISTools::add.alpha,input$transparency)
-    # tp <- lapply(lst2,function(vr){sapply(vr,stringr::str_extract,"..$")})[[1]][1]
-    # hex <- lapply(lst,function(vr){sapply(vr,stringr::str_extract,"[^#]*$")})
-    # lapply(hex,function(x){paste("#",tp,x,sep="")})
-    
   })
   
   output$sampleColorInputPanel <- renderUI({
@@ -414,7 +405,8 @@ server <- function(input, output) {
                                                                        "_")]] %||% "")
     )
   })
-  ###
+
+  
   output$downloadPlotButton <- renderUI({
     req(upsetPLot())
     req(eulerPlot())
@@ -427,11 +419,11 @@ server <- function(input, output) {
       "plot.pdf"
     },
     content = function(file) {
-      ggplot2::ggsave(file, plot = eulerPlot(), device = "pdf")
       if (input$plotType == "Euler") {
-        
-      } else
-        ggplot2::ggsave(file, plot = upsetPLot(), device = "pdf")
+        ggplot2::ggsave(file, plot = eulerPlot(), device = "pdf")
+      } else {
+        ggplot2::ggsave(file, plot = ggplotify::as.ggplot(upsetPLot()),device="pdf")
+        }
     }
   )
   
