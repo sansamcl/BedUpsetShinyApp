@@ -173,7 +173,7 @@ server <- function(input, output) {
     req(Beds.Df())
     req(datapaths())
     req(input$bedFileChoices)
-    req(input$minFracOverlap)
+    req(input$minFractOverlap)
     metaExpr(makePlotFromBeds(
       ..(input$bedFileChoices),
       "Euler",
@@ -181,7 +181,7 @@ server <- function(input, output) {
       ..(sampleColors()),
       ..(input$transparency),
       ..(input$fontScale),
-      ..(input$minFracOverlap)
+      ..(input$minFractOverlap)
     ))
   })
   
@@ -196,7 +196,7 @@ server <- function(input, output) {
       ..(sampleColors()),
       ..(input$transparency),
       ..(input$fontScale),
-      ..(input$minFracOverlap)
+      ..(input$minFractOverlap)
     ))
   })
   
