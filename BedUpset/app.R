@@ -44,6 +44,11 @@ ui <- fluidPage(
         selected = "Upset"
       ),
       numericInput(
+        inputId = "minFractOverlap",
+        label = "Minimum Fraction Overlap",
+        value = 0.1
+      ),
+      numericInput(
         inputId = "fontScale",
         label = "Font Scale",
         value = 1
@@ -87,7 +92,8 @@ server <- function(input, output) {
              sampleLabelsDF,
              colrs,
              alfa,
-             fontScale) {
+             fontScale,
+             minFracOverlap) {
       Beds.df <- Beds.Df()
       Beds.gr <- lapply(
         Beds.df,
@@ -97,14 +103,13 @@ server <- function(input, output) {
         end.field = "V3"
       )
       AllBeds.gr <- GenomicRanges::reduce(do.call("c", Beds.gr))
-      GetOverlapsWithAll <- function(bed.gr, all.gr) {
-        minFracOverlap <- 0.8
+      GetOverlapsWithAll <- function(bed.gr, all.gr, minOverlap) {
         hits <- findOverlaps(all.gr, bed.gr)
         overlaps <- pintersect(all.gr[queryHits(hits)],
                                bed.gr[subjectHits(hits)])
         percentOverlap <-
           width(overlaps) / width(all.gr[queryHits(hits)])
-        sigHits <- hits[percentOverlap > minFracOverlap]
+        sigHits <- hits[percentOverlap > minOverlap]
         GRovrlps <- all.gr[queryHits(sigHits)]
         paste(
           GenomicRanges::seqnames(GRovrlps),
@@ -113,7 +118,8 @@ server <- function(input, output) {
           sep = "_"
         )
       }
-      lst <- lapply(Beds.gr, GetOverlapsWithAll, AllBeds.gr)
+      lst <-
+        lapply(Beds.gr, GetOverlapsWithAll, AllBeds.gr, minFracOverlap)
       #nmes <- gsub(".bed","",basename(BedFilenames))
       nmes <-
         sampleLabelsDF$labels[match(sampleLabelsDF$files, basename(BedFilenames))]
@@ -167,13 +173,15 @@ server <- function(input, output) {
     req(Beds.Df())
     req(datapaths())
     req(input$bedFileChoices)
+    req(input$minFracOverlap)
     metaExpr(makePlotFromBeds(
       ..(input$bedFileChoices),
       "Euler",
       ..(sampleLabels()),
       ..(sampleColors()),
       ..(input$transparency),
-      ..(input$fontScale)
+      ..(input$fontScale),
+      ..(input$minFracOverlap)
     ))
   })
   
@@ -187,7 +195,8 @@ server <- function(input, output) {
       ..(sampleLabels()),
       ..(sampleColors()),
       ..(input$transparency),
-      ..(input$fontScale)
+      ..(input$fontScale),
+      ..(input$minFracOverlap)
     ))
   })
   
@@ -199,7 +208,8 @@ server <- function(input, output) {
                                    sampleLabelsDF,
                                    colrs,
                                    alfa,
-                                   fontScale) {
+                                   fontScale,
+                                   minFracOverlap) {
                             Beds.df <- lapply(BedFilenames, read.table)
                             Beds.gr <- lapply(
                               Beds.df,
@@ -208,24 +218,27 @@ server <- function(input, output) {
                               start.field = "V2",
                               end.field = "V3"
                             )
-                            AllBeds.gr <-
-                              GenomicRanges::reduce(do.call("c", Beds.gr))
-                            GetOverlapsWithAll <- function(bed.gr, all.gr) {
-                              minFracOverlap <- 0.8
-                              hits <- findOverlaps(all.gr, bed.gr)
-                              overlaps <- pintersect(all.gr[queryHits(hits)],
-                                                     bed.gr[subjectHits(hits)])
-                              percentOverlap <-
-                                width(overlaps) / width(all.gr[queryHits(hits)])
-                              sigHits <- hits[percentOverlap > minFracOverlap]
-                              paste(
-                                GenomicRanges::seqnames(GRovrlps),
-                                GenomicRanges::start(GRovrlps),
-                                GenomicRanges::end(GRovrlps),
-                                sep = "_"
-                              )
-                            }
-                            lst <- lapply(Beds.gr, GetOverlapsWithAll, AllBeds.gr)
+                            GetOverlapsWithAll <-
+                              function(bed.gr, all.gr, minOverlap) {
+                                hits <- findOverlaps(all.gr, bed.gr)
+                                overlaps <- pintersect(all.gr[queryHits(hits)],
+                                                       bed.gr[subjectHits(hits)])
+                                percentOverlap <-
+                                  width(overlaps) / width(all.gr[queryHits(hits)])
+                                sigHits <- hits[percentOverlap > minOverlap]
+                                GRovrlps <- all.gr[queryHits(sigHits)]
+                                paste(
+                                  GenomicRanges::seqnames(GRovrlps),
+                                  GenomicRanges::start(GRovrlps),
+                                  GenomicRanges::end(GRovrlps),
+                                  sep = "_"
+                                )
+                              }
+                            lst <-
+                              lapply(Beds.gr,
+                                     GetOverlapsWithAll,
+                                     AllBeds.gr,
+                                     minFracOverlap)
                             nmes <-
                               sampleLabelsDF$labels[match(sampleLabelsDF$files, basename(BedFilenames))]
                             nmes <- gsub("\\.[^.]*$", "", nmes)
@@ -265,7 +278,8 @@ server <- function(input, output) {
                                    sampleLabelsDF,
                                    colrs,
                                    alfa,
-                                   fontScale) {
+                                   fontScale,
+                                   minFracOverlap) {
                             Beds.df <- lapply(BedFilenames, read.table)
                             Beds.gr <- lapply(
                               Beds.df,
@@ -277,7 +291,6 @@ server <- function(input, output) {
                             AllBeds.gr <-
                               GenomicRanges::reduce(do.call("c", Beds.gr))
                             GetOverlapsWithAll <- function(bed.gr, all.gr) {
-                              minFracOverlap <- 0.8
                               hits <- findOverlaps(all.gr, bed.gr)
                               overlaps <- pintersect(all.gr[queryHits(hits)],
                                                      bed.gr[subjectHits(hits)])
@@ -291,7 +304,11 @@ server <- function(input, output) {
                                 sep = "_"
                               )
                             }
-                            lst <- lapply(Beds.gr, GetOverlapsWithAll, AllBeds.gr)
+                            lst <-
+                              lapply(Beds.gr,
+                                     GetOverlapsWithAll,
+                                     AllBeds.gr,
+                                     minFracOverlap)
                             nmes <-
                               sampleLabelsDF$labels[match(sampleLabelsDF$files, basename(BedFilenames))]
                             nmes <- gsub("\\.[^.]*$", "", nmes)
