@@ -179,29 +179,14 @@ server <- function(input, output) {
     input$bedFiles$datapath[match(input$bedFileChoices, input$bedFiles$name)]
   })
   
-  eulerPlot <- metaReactive2({
+  eulerPlot <- metaReactive2({ 
     req(Beds.Df())
     req(datapaths())
     req(input$bedFileChoices)
     req(input$minFractOverlap)
     metaExpr(makePlotFromBeds(
       ..(input$bedFileChoices),
-      "Euler",
-      ..(sampleLabels()),
-      ..(sampleColors()),
-      ..(input$transparency),
-      ..(input$fontScale),
-      ..(input$minFractOverlap)
-    ))
-  })
-  
-  upsetPLot <- metaReactive2({
-    req(Beds.Df())
-    req(datapaths())
-    req(input$bedFileChoices)
-    metaExpr(makePlotFromBeds(
-      ..(input$bedFileChoices),
-      "Upset",
+      ..(input$plotType),
       ..(sampleLabels()),
       ..(sampleColors()),
       ..(input$transparency),
@@ -348,18 +333,13 @@ server <- function(input, output) {
                             }
                             
                           }),
-                  upsetPLot())
+                  eulerPlot())
     }
   })
   
   
   output$upsetPlot <- renderPlot({
-    if (input$plotType == "Euler") {
-      eulerPlot()
-    } else{
-      upsetPLot()
-    }
-    
+    eulerPlot()
   }, height = metaReactive2({
     input$plotHeight
   }))
@@ -411,7 +391,6 @@ server <- function(input, output) {
 
   
   output$downloadPlotButton <- renderUI({
-    req(upsetPLot())
     req(eulerPlot())
     downloadButton("downloadPlot",
                    "Download Plot")
@@ -425,11 +404,10 @@ server <- function(input, output) {
       if (input$plotType == "Euler") {
         ggplot2::ggsave(file, plot = eulerPlot(), device = "pdf")
       } else {
-        ggplot2::ggsave(file, plot = ggplotify::as.ggplot(upsetPLot()),device="pdf")
+        ggplot2::ggsave(file, plot = ggplotify::as.ggplot(eulerPlot()),device="pdf")
         }
     }
   )
-  
 }
 
 # Run the application
