@@ -95,7 +95,7 @@ server <- function(input, output) {
   
   Beds.Df <- metaReactive2({
     req(datapaths())
-    lapply(datapaths(), read.table)
+    metaExpr(lapply(datapaths(), read.table))
   })
   
   makePlotFromBeds <-
@@ -183,7 +183,7 @@ server <- function(input, output) {
   datapaths <- metaReactive2({
     req(input$bedFiles)
     req(input$bedFileChoices)
-    input$bedFiles$datapath[match(input$bedFileChoices, input$bedFiles$name)]
+    metaExpr(input$bedFiles$datapath[match(input$bedFileChoices, input$bedFiles$name)])
   })
   
   eulerPlot <- metaReactive2({
@@ -204,13 +204,13 @@ server <- function(input, output) {
   
   sampleLabels <- metaReactive2({
     req(input$bedFileChoices)
-    data.frame(
+    metaExpr(data.frame(
       "files" = input$bedFileChoices,
       "labels" = purrr::map_chr(input$bedFileChoices, ~ input[[.x]] %||% "")
-    )
+    ))
   })
   
-  colorList <- metaReactive2({
+  colorList <- metaReactive({ #This should be put of shiny app
     list(
       c("#1B9E77", "#D95F02", "#bdbdbd"),
       RColorBrewer::brewer.pal(9, "Set1"),
@@ -391,7 +391,7 @@ server <- function(input, output) {
   
   output$upsetPlot <- renderPlot({
     eulerPlot()
-  }, height = metaReactive2({
+  }, height = metaReactive({
     input$plotHeight
   }))
   
@@ -411,11 +411,11 @@ server <- function(input, output) {
   
   sampleColors <- metaReactive2({
     req(input$bedFileChoices)
-    data.frame(
+    metaExpr(data.frame(
       "files" = input$bedFileChoices,
       "colors" = purrr::map_chr(input$bedFileChoices, ~ input[[paste(.x, "color", sep =
                                                                        "_")]] %||% "")
-    )
+    ))
   })
   
   output$downloadPlotButton <- renderUI({
