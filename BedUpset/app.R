@@ -109,22 +109,18 @@ server <- function(input, output) {
   
   # Reactives ----
   sampleLabels <- metaReactive2({
-    req(input$bedFileChoices)
-    metaExpr({data.frame(
-      "files" = ..(input$bedFileChoices),
-      "labels" = purrr::map_chr(..(input$bedFileChoices), ~ input[[.x]] %||% "")
-    )})
+    data.frame(
+      "files" = input$bedFileChoices,
+      "labels" = purrr::map_chr(input$bedFileChoices, ~ input[[.x]] %||% "")
+    )
   })
   
   sampleColors <-
     metaReactive2({
-      req(input$bedFileChoices)
-      metaExpr({
         data.frame(
-          "files" = ..(input$bedFileChoices),
-          "colors" = purrr::map_chr(..(input$bedFileChoices), ~ input[[paste(.x, "color", sep = "_")]] %||% "")
+          "files" = input$bedFileChoices,
+          "colors" = purrr::map_chr(input$bedFileChoices, ~ input[[paste(.x, "color", sep = "_")]] %||% "")
         )
-      })
     })
 
   datapaths <- 
