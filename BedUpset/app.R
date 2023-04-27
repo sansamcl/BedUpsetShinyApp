@@ -112,7 +112,7 @@ server <- function(input, output) {
     req(input$bedFileChoices)
     metaExpr({data.frame(
       "files" = ..(input$bedFileChoices),
-      "labels" = purrr::map_chr(..(input$bedFileChoices), ~ ..(input[[.x]]) %||% "")
+      "labels" = purrr::map_chr(..(input$bedFileChoices), ~ input[[.x]] %||% "")
     )})
   })
   
