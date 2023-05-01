@@ -129,9 +129,9 @@ server <- function(input, output) {
         input$bedFiles$datapath[match(input$bedFileChoices, input$bedFiles$name)]
   })
   
-  Beds.Df <- reactive({
+  Beds.Df <- metaReactive({
     lapply(datapaths(), read.table)
-  })
+  }, )
     
   Beds.gr <-
     metaReactive({
@@ -186,27 +186,32 @@ server <- function(input, output) {
   
   upsetList <- metaReactive({UpSetR::fromList(..(lst()))})
   ## Plot ----
-
+  
   Plot <-
     metaReactive2({
       req(input$bedFiles$name)
-      metaExpr({
-        if (..(input$plotType) == "Upset") {
+      if (input$plotType == "Upset") {
+        metaExpr({
           UpSetR::upset(
             ..(upsetList()),
             nsets = length(..(lst())),
             order.by = "freq",
             text.scale = ..(input$fontScale)
           )
-        } else {
+        })
+      }
+      else {
+        metaExpr({
           plot(
             eulerr::euler(..(upsetList())),
             quantities = T,
             fills = ..(sampleColors())$colors,
             alpha = ..(input$transparency)
           )
-        }})}, varname = "Plot"
-    )
+        })
+      }
+    },
+    varname = "Plot")
   
   # Outputs ----
   output$sampleChoices <- renderUI({
