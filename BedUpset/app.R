@@ -125,18 +125,19 @@ server <- function(input, output) {
     varname = "sampleColors")
 
   datapaths <- 
-    reactive({
+    metaReactive({
         input$bedFiles$datapath[match(input$bedFileChoices, input$bedFiles$name)]
-  })
+  },
+  varname = "files")
   
   Beds.Df <- metaReactive({
-    lapply(datapaths(), read.table)
-  }, )
+    lapply(..(datapaths()), read.table)
+  }, varname = "Beds.Df")
     
   Beds.gr <-
     metaReactive({
       lapply(
-        Beds.Df(),
+        ..(Beds.Df()),
         GenomicRanges::makeGRangesFromDataFrame,
         seqnames.field = "V1",
         start.field = "V2",
@@ -232,9 +233,13 @@ server <- function(input, output) {
   ## Plot code ----
   output$PlotCode <- 
     renderPrint({
-      formatCode(expandChain(
-        expr(Beds.Df <- lapply(!!input$bedFileChoices, read.table)),
-        output$Plot()))
+      ec <- newExpansionContext()
+      ec$substituteMetaReactive(datapaths, function() {
+        metaExpr(..(input$bedFileChoices))
+      })
+      expandChain(
+        .expansionContext = ec,
+        output$Plot())
     })
   
   output$sampleLabelInputPanel <- renderUI({
