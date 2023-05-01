@@ -108,43 +108,40 @@ server <- function(input, output) {
   options(shiny.maxRequestSize = 100 * 1024 ^ 2)
   
   # Reactives ----
-  sampleLabels <- metaReactive2({
+  sampleLabels <- metaReactive({
     data.frame(
-      "files" = input$bedFileChoices,
-      "labels" = purrr::map_chr(input$bedFileChoices, ~ input[[.x]] %||% "")
+      "files" = ..(input$bedFileChoices),
+      "labels" = ..(purrr::map_chr(input$bedFileChoices, ~ input[[.x]] %||% ""))
     )
   })
   
   sampleColors <-
-    metaReactive2({
+    metaReactive({
         data.frame(
-          "files" = input$bedFileChoices,
-          "colors" = purrr::map_chr(input$bedFileChoices, ~ input[[paste(.x, "color", sep = "_")]] %||% "")
+          "files" = ..(input$bedFileChoices),
+          "colors" = ..(purrr::map_chr(input$bedFileChoices, ~ input[[paste(.x, "color", sep = "_")]] %||% ""))
         )
     })
 
   datapaths <- 
-    metaReactive2({
-      req(input$bedFiles)
-      req(input$bedFileChoices)
-      metaExpr({
-        ..(input$bedFiles$datapath[match(input$bedFileChoices, input$bedFiles$name)])})
+    reactive({
+        input$bedFiles$datapath[match(input$bedFileChoices, input$bedFiles$name)]
   })
   
-  Beds.Df <- metaReactive2({
-    req(datapaths())
-    metaExpr({lapply(..(datapaths()), read.table)})
+  Beds.Df <- reactive({
+    lapply(datapaths(), read.table)
   })
     
   Beds.gr <-
     metaReactive({
       lapply(
-        ..(Beds.Df()),
+        Beds.Df(),
         GenomicRanges::makeGRangesFromDataFrame,
         seqnames.field = "V1",
         start.field = "V2",
         end.field = "V3"
-      )}
+      )},
+      varname="Beds.gr"
     ) 
   
   AllBeds.gr <- 
@@ -184,7 +181,7 @@ server <- function(input, output) {
               ..(nmes()))})
   
   upsetList <- metaReactive({UpSetR::fromList(..(lst()))})
-  
+  ## Plot ----
   Plot <-
     metaReactive2({
       req(input$bedFiles$name)
@@ -217,15 +214,15 @@ server <- function(input, output) {
       selected = input$bedFiles$name
     )
   })
-  
+  ## Plot ----
   output$upsetPlot <-
     metaRender(renderPlot, {
      ..(Plot())}
     )
-  
+  ## Plot code ----
   output$upsetPLotCode <- 
     renderPrint({
-      expandChain(output$upsetPlot())
+      expandChain(expr(Beds.Df <- lapply(!!input$bedFileChoices, read.table)),output$upsetPlot())
     })
   
   output$sampleLabelInputPanel <- renderUI({
