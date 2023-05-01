@@ -95,9 +95,9 @@ sidebarLayout(
     )
   ),
   mainPanel(
-    wellPanel(plotOutput("upsetPlot"),
+    wellPanel(plotOutput("Plot"),
               uiOutput("downloadPlotButton")),
-    wellPanel(verbatimTextOutput("upsetPLotCode"))
+    wellPanel(verbatimTextOutput("PlotCode"))
   )
 )
 )
@@ -121,7 +121,8 @@ server <- function(input, output) {
           "files" = ..(input$bedFileChoices),
           "colors" = ..(purrr::map_chr(input$bedFileChoices, ~ input[[paste(.x, "color", sep = "_")]] %||% ""))
         )
-    })
+    },
+    varname = "sampleColors")
 
   datapaths <- 
     reactive({
@@ -145,11 +146,13 @@ server <- function(input, output) {
     ) 
   
   AllBeds.gr <- 
-    metaReactive({GenomicRanges::reduce(do.call("c", ..(Beds.gr())))}) 
+    metaReactive({GenomicRanges::reduce(do.call("c", ..(Beds.gr())))},
+                 varname = "AllBeds.gr") 
   
   nmes <-
     metaReactive({
-      ..(sampleLabels())$labels[match(..(sampleLabels())$file, basename(..(input$bedFileChoices)))] %>% gsub("\\.[^.]*$", "", .)})
+      ..(sampleLabels())$labels[match(..(sampleLabels())$file, basename(..(input$bedFileChoices)))] %>% gsub("\\.[^.]*$", "", .)},
+      varname = "nmes")
     
   List <-
     metaReactive({
@@ -174,7 +177,8 @@ server <- function(input, output) {
                  )
                  }
                )
-        })
+        },
+        varname = "List")
   
   lst <- metaReactive({
     set_names(..(List()), 
@@ -182,6 +186,7 @@ server <- function(input, output) {
   
   upsetList <- metaReactive({UpSetR::fromList(..(lst()))})
   ## Plot ----
+
   Plot <-
     metaReactive2({
       req(input$bedFiles$name)
@@ -200,7 +205,7 @@ server <- function(input, output) {
             fills = ..(sampleColors())$colors,
             alpha = ..(input$transparency)
           )
-        }})}
+        }})}, varname = "Plot"
     )
   
   # Outputs ----
@@ -215,14 +220,16 @@ server <- function(input, output) {
     )
   })
   ## Plot ----
-  output$upsetPlot <-
+  output$Plot <-
     metaRender(renderPlot, {
      ..(Plot())}
     )
   ## Plot code ----
-  output$upsetPLotCode <- 
+  output$PlotCode <- 
     renderPrint({
-      expandChain(expr(Beds.Df <- lapply(!!input$bedFileChoices, read.table)),output$upsetPlot())
+      formatCode(expandChain(
+        expr(Beds.Df <- lapply(!!input$bedFileChoices, read.table)),
+        output$Plot()))
     })
   
   output$sampleLabelInputPanel <- renderUI({
