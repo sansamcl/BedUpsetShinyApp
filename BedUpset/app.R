@@ -151,13 +151,11 @@ server <- function(input, output) {
       "labels" = ..(purrr::map_chr(input$bedFileChoices, ~ input[[.x]] %||% ""))
     )
   })
-  
+    
   sampleColors <-
     metaReactive({
-        data.frame(
-          "files" = ..(input$bedFileChoices),
-          "colors" = ..(purrr::map_chr(input$bedFileChoices, ~ input[[paste(.x, "color", sep = "_")]] %||% ""))
-        )
+      ..(purrr::map_chr(input$bedFileChoices,
+                        ~ input[[paste(.x, "color", sep = "_")]] %||% ""))
     },
     varname = "sampleColors")
   
@@ -216,7 +214,7 @@ server <- function(input, output) {
           plot(
             eulerr::euler(..(upsetList())),
             quantities = T,
-            fills = ..(sampleColors())$colors,
+            fills = ..(sampleColors()),
             alpha = ..(input$transparency)
           )
         })
