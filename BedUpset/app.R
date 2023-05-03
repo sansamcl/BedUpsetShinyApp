@@ -108,18 +108,39 @@ server <- function(input, output) {
   options(shiny.maxRequestSize = 100 * 1024 ^ 2)
   
   # Reactives ----
-  Beds.Df <- reactiveVal({})
-  observeEvent(input$bedFiles, {
-    Beds.Df(c(Beds.Df(), Beds.uploaded()))})
-
   Beds.uploaded <-
     reactive({
       a <- input$bedFiles$datapath
       names(a) <- input$bedFiles$name
       df <- lapply(a, read.table)
-      df
-        }
-      )
+      df # I think this is not necessary, it will return last object
+    }
+    )
+  
+  Beds.Df <- reactiveVal({})
+  observeEvent(input$bedFiles, {
+    Beds.Df(c(Beds.Df(), Beds.uploaded()))})
+  
+  selected_beds.Df <- 
+    metaReactive({
+      Beds.Df()[names(Beds.Df()) %in% input$bedFileChoices]},
+      varname = "selected_beds.Df")
+  
+  Beds.gr <-
+    metaReactive({
+      lapply(
+        ..(selected_beds.Df()),
+        GenomicRanges::makeGRangesFromDataFrame,
+        seqnames.field = "V1",
+        start.field = "V2",
+        end.field = "V3"
+      )},
+      varname="Beds.gr"
+    ) 
+  
+  AllBeds.gr <- 
+    metaReactive({GenomicRanges::reduce(do.call("c", ..(Beds.gr() %>% set_names(NULL))))},
+                 varname = "AllBeds.gr") 
   
   sampleLabels <- metaReactive({
     data.frame(
@@ -136,22 +157,6 @@ server <- function(input, output) {
         )
     },
     varname = "sampleColors")
-    
-  Beds.gr <-
-    metaReactive({
-      lapply(
-        ..(Beds.Df()),
-        GenomicRanges::makeGRangesFromDataFrame,
-        seqnames.field = "V1",
-        start.field = "V2",
-        end.field = "V3"
-      )},
-      varname="Beds.gr"
-    ) 
-  
-  AllBeds.gr <- 
-    metaReactive({GenomicRanges::reduce(do.call("c", ..(Beds.gr())))},
-                 varname = "AllBeds.gr") 
   
   nmes <-
     metaReactive({
@@ -232,33 +237,33 @@ server <- function(input, output) {
     metaRender(renderPlot, {
      ..(Plot())}
     )
-  ## Plot code ----
-  # output$PlotCode <- 
-  #   renderPrint({
-  #     ec <- newExpansionContext()
-  #     ec$substituteMetaReactive(datapaths, function() {
-  #       metaExpr(..(input$bedFileChoices))
-  #     })
-  #     expandChain(
-  #       .expansionContext = ec,
-  #       output$Plot())
-  #   })
-  
+
+    # Plot code ----
   output$PlotCode <-
     renderPrint({
-      AllBeds.gr()
+      ec <- newExpansionContext()
+      ec$substituteMetaReactive(selected_beds.Df, function() {
+        metaExpr(..(input$bedFileChoices))
+      })
+      expandChain(
+        .expansionContext = ec,
+        output$Plot())
     })
   
   output$sampleLabelInputPanel <- renderUI({
-    purrr::map(input$bedFileChoices, ~ textInput(.x, .x, .x))
+    purrr::map(input$bedFileChoices, 
+               ~ textInput(inputId =.x, 
+                           label = .x, 
+                           value = .x))
   })
   
   output$sampleColorInputPanel <- renderUI({
     purrr::map(
       input$bedFileChoices,
-      ~ shinyWidgets::spectrumInput(paste(.x, "color", sep = "_"),
-                                    .x,
-                                    choices = colorList)
+      ~ shinyWidgets::spectrumInput(
+        inputId = paste(.x, "color", sep = "_"),
+        label = .x,
+        choices = colorList)
     )
   })
   
@@ -286,3 +291,8 @@ server <- function(input, output) {
 
 # Run the application
 shinyApp(ui = ui, server = server)
+
+
+# Next step ----
+  # BedfileChoice not working. When you take a sample out, it throws an error
+  # Plotcode not working. "atempting to replace a reactive that is not metareactive"
