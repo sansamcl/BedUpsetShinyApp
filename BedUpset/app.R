@@ -264,7 +264,8 @@ server <- function(input, output) {
       ~ shinyWidgets::spectrumInput(
         inputId = paste(.x, "color", sep = "_"),
         label = .x,
-        choices = colorList)
+        choices = colorList,
+        selected = input[[paste(.x, "color", sep = "_")]])
     )
   })
   
