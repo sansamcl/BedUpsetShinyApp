@@ -108,6 +108,19 @@ server <- function(input, output) {
   options(shiny.maxRequestSize = 100 * 1024 ^ 2)
   
   # Reactives ----
+  Beds.Df <- reactiveVal({})
+  observeEvent(input$bedFiles, {
+    Beds.Df(c(Beds.Df(), Beds.uploaded()))})
+
+  Beds.uploaded <-
+    reactive({
+      a <- input$bedFiles$datapath
+      names(a) <- input$bedFiles$name
+      df <- lapply(a, read.table)
+      df
+        }
+      )
+  
   sampleLabels <- metaReactive({
     data.frame(
       "files" = ..(input$bedFileChoices),
@@ -123,16 +136,6 @@ server <- function(input, output) {
         )
     },
     varname = "sampleColors")
-
-  datapaths <- 
-    metaReactive({
-        input$bedFiles$datapath[match(input$bedFileChoices, input$bedFiles$name)]
-  },
-  varname = "files")
-  
-  Beds.Df <- metaReactive({
-    lapply(..(datapaths()), read.table)
-  }, varname = "Beds.Df")
     
   Beds.gr <-
     metaReactive({
@@ -187,7 +190,6 @@ server <- function(input, output) {
   
   upsetList <- metaReactive({UpSetR::fromList(..(lst()))})
   ## Plot ----
-  
   Plot <-
     metaReactive2({
       req(input$bedFiles$name)
@@ -221,8 +223,8 @@ server <- function(input, output) {
     shinyWidgets::multiInput(
       "bedFileChoices",
       "Choose Bed Files",
-      input$bedFiles$name,
-      selected = input$bedFiles$name
+      names(Beds.Df()),
+      selected = names(Beds.Df())
     )
   })
   ## Plot ----
@@ -231,15 +233,20 @@ server <- function(input, output) {
      ..(Plot())}
     )
   ## Plot code ----
-  output$PlotCode <- 
+  # output$PlotCode <- 
+  #   renderPrint({
+  #     ec <- newExpansionContext()
+  #     ec$substituteMetaReactive(datapaths, function() {
+  #       metaExpr(..(input$bedFileChoices))
+  #     })
+  #     expandChain(
+  #       .expansionContext = ec,
+  #       output$Plot())
+  #   })
+  
+  output$PlotCode <-
     renderPrint({
-      ec <- newExpansionContext()
-      ec$substituteMetaReactive(datapaths, function() {
-        metaExpr(..(input$bedFileChoices))
-      })
-      expandChain(
-        .expansionContext = ec,
-        output$Plot())
+      AllBeds.gr()
     })
   
   output$sampleLabelInputPanel <- renderUI({
