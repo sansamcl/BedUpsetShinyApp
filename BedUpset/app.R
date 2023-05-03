@@ -255,7 +255,9 @@ server <- function(input, output) {
     purrr::map(input$bedFileChoices, 
                ~ textInput(inputId =.x, 
                            label = .x, 
-                           value = .x))
+                           value =  ifelse(is.null(input[[.x]]),
+                                           .x, 
+                                           input[[.x]])))
   })
   
   output$sampleColorInputPanel <- renderUI({
