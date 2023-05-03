@@ -50,7 +50,8 @@ sidebarLayout(sidebarPanel(wellPanel(
     inputId = "bedFiles",
     label = "BedFiles",
     multiple = T
-  )
+  ),
+  actionButton("reset_button", "Reset list of files")
 )),
 mainPanel(wellPanel(
   uiOutput("sampleChoices")
@@ -120,6 +121,8 @@ server <- function(input, output) {
   Beds.Df <- reactiveVal({})
   observeEvent(input$bedFiles, {
     Beds.Df(c(Beds.Df(), Beds.uploaded()))})
+  observeEvent(input$reset_button, {
+    Beds.Df({})})
   
   selected_beds.Df <- 
     metaReactive({
