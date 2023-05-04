@@ -244,7 +244,7 @@ server <- function(input, output) {
     renderPrint({
       ec <- newExpansionContext()
       ec$substituteMetaReactive(selected_beds.Df, function() {
-        metaExpr(..(input$bedFileChoices))
+        metaExpr(lapply(..(input$bedFileChoices), read.table))
       })
       expandChain(
         .expansionContext = ec,
