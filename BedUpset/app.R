@@ -247,8 +247,15 @@ server <- function(input, output) {
         metaExpr(lapply(..(input$bedFileChoices), read.table))
       })
       expandChain(
+        quote(library(purrr)),
+        quote(require(ggplot2)),
+        quote(require(GenomicRanges)),
+        quote(require(UpSetR)),
+        quote(require(eulerr)),
+        quote(require(ggplotify)),
         .expansionContext = ec,
-        output$Plot())
+        output$Plot()
+      )
     })
   
   output$sampleLabelInputPanel <- renderUI({
