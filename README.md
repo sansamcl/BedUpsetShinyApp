@@ -6,7 +6,7 @@
 ![LastCommit](https://img.shields.io/github/last-commit/sansamcl/BedUpsetShinyApp)
 ![Downloads](https://img.shields.io/github/downloads/sansamcl/BedUpsetShinyApp/total)
 ![OpenIssues](https://img.shields.io/github/issues-raw/sansamcl/BedUpsetShinyApp)
-[![DOI](https://zenodo.org/badge/472901755.svg)](https://zenodo.org/badge/latestdoi/472901755)
+[![DOI](https://zenodo.org/badge/375552189.svg)](https://zenodo.org/badge/latestdoi/375552189)
 
 <a href="https://sansamlab.shinyapps.io/BedUpset/">
 <figure>
