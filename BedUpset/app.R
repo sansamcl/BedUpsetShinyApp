@@ -106,7 +106,7 @@ sidebarLayout(
 # Server ----
 # Define server logic required to draw a histogram
 server <- function(input, output) {
-  options(shiny.maxRequestSize = 100 * 1024 ^ 2)
+  options(shiny.maxRequestSize = 500 * 1024 ^ 2)
   
   # Reactives ----
   Beds.uploaded <-
